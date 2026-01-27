@@ -26,7 +26,7 @@
 
   <!-- Primary action -->
   <div class="cta-row">
-    <a id="btnhompage" class="pill-btn pill-green" href="#homepage">REGISTER FOR ATTENDEES</a>
+    <a id="btnhompage" class="pill-btn pill-green" href="#register">REGISTER FOR ATTENDEES</a>
   </div>
 
   <h2 class="section-title">On The 1st Birthday</h2>
@@ -41,5 +41,129 @@
   <div id="catering" style="height: 1px;"></div>
   <div id="register" style="height: 1px;"></div>
   <div id="godfather" style="height: 1px;"></div>
+
+  <!-- Register Modal -->
+  <div id="registerModal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+      <button class="modal-close" type="button" aria-label="Close">&times;</button>
+      <h3 id="registerTitle">Register for Attendees</h3>
+      <form class="modal-form">
+        <label class="field">
+          <span>First Name</span>
+          <input type="text" name="firstName" placeholder="Enter first name" required />
+        </label>
+        <label class="field">
+          <span>Last Name</span>
+          <input type="text" name="lastName" placeholder="Enter last name" required />
+        </label>
+        <label class="field">
+          <span>Middle Name</span>
+          <input type="text" name="middleName" placeholder="Enter middle name" />
+        </label>
+
+        <div class="field">
+          <span>Attendance</span>
+          <div class="toggle-group" role="group" aria-label="Attendance toggle">
+            <label class="toggle-option">
+              <input type="radio" name="attendance" value="can-attend" checked />
+              <span>I can attend</span>
+            </label>
+            <label class="toggle-option">
+              <input type="radio" name="attendance" value="cannot-attend" />
+              <span>I cannot attend</span>
+            </label>
+          </div>
+        </div>
+
+        <button class="pill-btn pill-green modal-submit" type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-hidden="true">
+    Submitted successfully.
+  </div>
+
+  <script>
+    const registerBtn = document.getElementById("btnhompage");
+    const registerModal = document.getElementById("registerModal");
+    const closeBtn = registerModal.querySelector(".modal-close");
+    const registerForm = registerModal.querySelector(".modal-form");
+    const toast = document.getElementById("toast");
+    let toastTimer;
+
+    const openModal = () => {
+      registerModal.classList.add("is-open");
+      registerModal.setAttribute("aria-hidden", "false");
+    };
+
+    const closeModal = () => {
+      registerModal.classList.remove("is-open");
+      registerModal.setAttribute("aria-hidden", "true");
+    };
+
+    const showToast = (message) => {
+      toast.textContent = message;
+      toast.classList.add("is-visible");
+      toast.setAttribute("aria-hidden", "false");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove("is-visible");
+        toast.setAttribute("aria-hidden", "true");
+      }, 2200);
+    };
+
+    registerBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      openModal();
+    });
+
+    closeBtn.addEventListener("click", closeModal);
+
+    registerModal.addEventListener("click", (event) => {
+      if (event.target === registerModal) {
+        closeModal();
+      }
+    });
+
+    registerForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const formData = new FormData(registerForm);
+      const payload = {
+        firstName: formData.get("firstName"),
+        lastName: formData.get("lastName"),
+        middleName: formData.get("middleName"),
+        canAttend: formData.get("attendance") === "can-attend"
+      };
+
+      try {
+        const response = await fetch("/api/attendees", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const message = result.error || "Submit failed. Please try again.";
+          throw new Error(message);
+        }
+
+        closeModal();
+        showToast(result.message || "Submitted successfully.");
+        registerForm.reset();
+      } catch (error) {
+        console.error(error);
+        showToast(error.message || "Submit failed. Please try again.");
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && registerModal.classList.contains("is-open")) {
+        closeModal();
+      }
+    });
+  </script>
 </body>
 </html>

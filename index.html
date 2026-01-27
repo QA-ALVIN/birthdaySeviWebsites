@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="./style.css" />
   <!-- Optional: clean, bold heading font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link href="server.js">
+  <link href="script.js">
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -51,15 +53,15 @@
       <form class="modal-form">
         <label class="field">
           <span>First Name</span>
-          <input type="text" name="firstName" placeholder="Enter first name" required />
+          <input type="text" id="firstname" name="firstName" placeholder="Enter first name" required />
         </label>
         <label class="field">
           <span>Last Name</span>
-          <input type="text" name="lastName" placeholder="Enter last name" required />
+          <input type="text" id="lastName" name="lastName" placeholder="Enter last name" required />
         </label>
         <label class="field">
           <span>Middle Name</span>
-          <input type="text" name="middleName" placeholder="Enter middle name" />
+          <input type="text" id="middleName" name="middleName" placeholder="Enter middle name" />
         </label>
 
         <div class="field">

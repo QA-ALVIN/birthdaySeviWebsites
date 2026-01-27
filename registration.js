@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const result = await response.json().catch(() => ({}));
         if (response.status === 409) {
-          showToast("User already registered.");
+          showToast("already registered.");
           return;
         }
         if (!response.ok) {
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           const exists = (typeof count === "number" ? count : (existingRows?.length || 0)) > 0;
           if (exists) {
-            showToast("User already registered.");
+            showToast("already registered.");
             return;
           }
         }

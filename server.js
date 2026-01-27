@@ -68,7 +68,7 @@ app.post("/api/attendees", async (req, res) => {
       `);
 
     if (existing.recordset?.[0]?.Count > 0) {
-      return res.status(409).json({ error: "User already registered." });
+      return res.status(409).json({ error: "already registered." });
     }
 
     await pool.request()

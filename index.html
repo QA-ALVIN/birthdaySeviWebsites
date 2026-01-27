@@ -87,7 +87,7 @@
     Submitted successfully.
   </div>
 
-  <!-- <script>
+  <script>
     const registerBtn = document.getElementById("btnhompage");
     const registerModal = document.getElementById("registerModal");
     const closeBtn = registerModal.querySelector(".modal-close");
@@ -129,44 +129,44 @@
       }
     });
 
-    registerForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const formData = new FormData(registerForm);
-      const payload = {
-        firstName: formData.get("firstName"),
-        lastName: formData.get("lastName"),
-        middleName: formData.get("middleName"),
-        canAttend: formData.get("attendance") === "can-attend"
-      };
+    // registerForm.addEventListener("submit", async (event) => {
+    //   event.preventDefault();
+    //   const formData = new FormData(registerForm);
+    //   const payload = {
+    //     firstName: formData.get("firstName"),
+    //     lastName: formData.get("lastName"),
+    //     middleName: formData.get("middleName"),
+    //     canAttend: formData.get("attendance") === "can-attend"
+    //   };
 
-      try {
-        const response = await fetch("/api/attendees", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+    //   try {
+    //     const response = await fetch("/api/attendees", {
+    //       method: "POST",
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify(payload)
+    //     });
 
-        const result = await response.json().catch(() => ({}));
+    //     const result = await response.json().catch(() => ({}));
 
-        if (!response.ok) {
-          const message = result.error || "Submit failed. Please try again.";
-          throw new Error(message);
-        }
+    //     if (!response.ok) {
+    //       const message = result.error || "Submit failed. Please try again.";
+    //       throw new Error(message);
+    //     }
 
-        closeModal();
-        showToast(result.message || "Submitted successfully.");
-        registerForm.reset();
-      } catch (error) {
-        console.error(error);
-        showToast(error.message || "Submit failed. Please try again.");
-      }
-    });
+    //     closeModal();
+    //     showToast(result.message || "Submitted successfully.");
+    //     registerForm.reset();
+    //   } catch (error) {
+    //     console.error(error);
+    //     showToast(error.message || "Submit failed. Please try again.");
+    //   }
+    // });
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && registerModal.classList.contains("is-open")) {
         closeModal();
       }
     });
-  </script> -->
+  </script>
 </body>
 </html>

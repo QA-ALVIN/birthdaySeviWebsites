@@ -8,10 +8,15 @@ dotenv.config();
 const app = express();
 const path = require("path");
 const port = process.env.PORT || 8080;
+import { createClient } from '@supabase/supabase-js'
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
+
+const supabaseUrl = 'https://gfkqnumndbddqqwtkzrb.supabase.co'
+const supabaseKey = 'sb_publishable_UxSj6m1Fs09le4GhMh7H3g_-nTfCsmi'
+const supabase = supabase.createClient(supabaseUrl, supabaseKey)
 
 const dbConfig = {
   server: process.env.DB_SERVER,

@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="./style.css" />
   <!-- Optional: clean, bold heading font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <link href="server.js">
-  <link href="script.js">
+  <script src="server.js"></script>
+  <script src="script.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -128,6 +128,31 @@
         closeModal();
       }
     });
+
+    const form = document.getElementById('form')
+ 
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+    
+      const firstname = document.getElementById('firstname').value
+      const middlename = document.getElementById('middlename').value
+      const lastname = document.getElementById('lastname').value
+    
+      const { error } = await supabase
+        .from('submissions')
+        .insert({
+          firstname,
+          middlename,
+          lastname
+        })
+    
+      if (error) {
+        alert(error.message)
+      } else {
+        alert('Submitted!')
+        form.reset()
+      }
+    })
 
     // registerForm.addEventListener("submit", async (event) => {
     //   event.preventDefault();

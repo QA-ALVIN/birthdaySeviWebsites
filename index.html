@@ -9,9 +9,6 @@
   <link rel="stylesheet" href="./style.css" />
   <!-- Optional: clean, bold heading font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <script src="server.js"></script>
-  <script src="script.js"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <!-- Top actions -->
@@ -87,111 +84,7 @@
     Submitted successfully.
   </div>
 
-  <script>
-    const registerBtn = document.getElementById("btnhompage");
-    const registerModal = document.getElementById("registerModal");
-    const closeBtn = registerModal.querySelector(".modal-close");
-    const registerForm = registerModal.querySelector(".modal-form");
-    const toast = document.getElementById("toast");
-    let toastTimer;
-
-    const openModal = () => {
-      registerModal.classList.add("is-open");
-      registerModal.setAttribute("aria-hidden", "false");
-    };
-
-    const closeModal = () => {
-      registerModal.classList.remove("is-open");
-      registerModal.setAttribute("aria-hidden", "true");
-    };
-
-    const showToast = (message) => {
-      toast.textContent = message;
-      toast.classList.add("is-visible");
-      toast.setAttribute("aria-hidden", "false");
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.remove("is-visible");
-        toast.setAttribute("aria-hidden", "true");
-      }, 2200);
-    };
-
-    registerBtn.addEventListener("click", (event) => {
-      event.preventDefault();
-      openModal();
-    });
-
-    closeBtn.addEventListener("click", closeModal);
-
-    registerModal.addEventListener("click", (event) => {
-      if (event.target === registerModal) {
-        closeModal();
-      }
-    });
-
-    // registerForm.addEventListener("submit", async (event) => {
-    //   event.preventDefault();
-    //   const formData = new FormData(registerForm);
-    //   const payload = {
-    //     firstName: formData.get("firstName"),
-    //     lastName: formData.get("lastName"),
-    //     middleName: formData.get("middleName"),
-    //     canAttend: formData.get("attendance") === "can-attend"
-    //   };
-
-    //   try {
-    //     const response = await fetch("/api/attendees", {
-    //       method: "POST",
-    //       headers: { "Content-Type": "application/json" },
-    //       body: JSON.stringify(payload)
-    //     });
-
-    //     const result = await response.json().catch(() => ({}));
-
-    //     if (!response.ok) {
-    //       const message = result.error || "Submit failed. Please try again.";
-    //       throw new Error(message);
-    //     }
-
-    //     closeModal();
-    //     showToast(result.message || "Submitted successfully.");
-    //     registerForm.reset();
-    //   } catch (error) {
-    //     console.error(error);
-    //     showToast(error.message || "Submit failed. Please try again.");
-    //   }
-    // });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && registerModal.classList.contains("is-open")) {
-        closeModal();
-      }
-    });
-
-    const form = document.getElementById('form')
- 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault()
-    
-      const firstname = document.getElementById('firstname').value
-      const middlename = document.getElementById('middlename').value
-      const lastname = document.getElementById('lastname').value
-    
-      const { error } = await supabase
-        .from('submissions')
-        .insert({
-          firstname,
-          middlename,
-          lastname
-        })
-    
-      if (error) {
-        alert(error.message)
-      } else {
-        alert('Submitted!')
-        form.reset()
-      }
-    })
-  </script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="./registration.js" defer></script>
 </body>
 </html>

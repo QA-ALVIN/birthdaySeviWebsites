@@ -58,10 +58,10 @@ document.addEventListener("DOMContentLoaded", () => {
     event.preventDefault();
     const formData = new FormData(registerForm);
     const payload = {
-      FirstName: formData.get("firstName"),
-      LastName: formData.get("lastName"),
-      MiddleName: formData.get("middleName"),
-      CanAttend: formData.get("attendance") === "can-attend"
+      "FIRST_NAME": formData.get("firstName"),
+      "LAST_NAME": formData.get("lastName"),
+      "MIDDLE_NAME": formData.get("middleName"),
+      "CAN_ATTEND": formData.get("attendance") === "can-attend"
     };
 
     try {

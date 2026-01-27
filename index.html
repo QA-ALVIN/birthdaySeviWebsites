@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="./style.css" />
   <!-- Optional: clean, bold heading font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <script src="server.js"></script>
-  <script src="script.js"></script>
+  <!-- <script src="server.js"></script> -->
+  <!-- <script src="script.js"></script> -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -88,6 +88,11 @@
   </div>
 
   <script>
+    const supabaseUrl = 'https://gfkqnumndbddqqwtkzrb.supabase.co'
+    const supabaseKey = 'sb_publishable_UxSj6m1Fs09le4GhMh7H3g_-nTfCsmi'
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+
     const registerBtn = document.getElementById("btnhompage");
     const registerModal = document.getElementById("registerModal");
     const closeBtn = registerModal.querySelector(".modal-close");

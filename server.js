@@ -46,32 +46,35 @@ app.get("/api/health", (req, res) => {
 app.post("/api/attendees", async (req, res) => {
   const { firstName, lastName, middleName, canAttend } = req.body || {};
 
-  if (!firstName || !lastName || typeof canAttend !== "boolean") {
+  const normalizeName = (value) => (value || "").trim().replace(/\s+/g, " ");
+  const normalizedFirst = normalizeName(firstName);
+  const normalizedLast = normalizeName(lastName);
+  const normalizedMiddle = normalizeName(middleName);
+
+  if (!normalizedFirst || !normalizedLast || typeof canAttend !== "boolean") {
     return res.status(400).json({ error: "Invalid payload" });
   }
 
   try {
     const pool = await getPool();
     const existing = await pool.request()
-      .input("firstName", sql.NVarChar(100), firstName)
-      .input("lastName", sql.NVarChar(100), lastName)
-      .input("middleName", sql.NVarChar(100), middleName || "")
+      .input("firstName", sql.NVarChar(100), normalizedFirst)
+      .input("lastName", sql.NVarChar(100), normalizedLast)
       .query(`
         SELECT COUNT(1) AS Count
         FROM dbo.Attendees
-        WHERE FirstName = @firstName
-          AND LastName = @lastName
-          AND ISNULL(MiddleName, '') = @middleName;
+        WHERE LOWER(LTRIM(RTRIM(FirstName))) = LOWER(@firstName)
+          AND LOWER(LTRIM(RTRIM(LastName))) = LOWER(@lastName);
       `);
 
     if (existing.recordset?.[0]?.Count > 0) {
-      return res.status(409).json({ error: "Existing record found." });
+      return res.status(409).json({ error: "User already registered." });
     }
 
     await pool.request()
-      .input("firstName", sql.NVarChar(100), firstName)
-      .input("lastName", sql.NVarChar(100), lastName)
-      .input("middleName", sql.NVarChar(100), middleName || null)
+      .input("firstName", sql.NVarChar(100), normalizedFirst)
+      .input("lastName", sql.NVarChar(100), normalizedLast)
+      .input("middleName", sql.NVarChar(100), normalizedMiddle || null)
       .input("canAttend", sql.Bit, canAttend)
       .query(`
         INSERT INTO dbo.Attendees (FirstName, LastName, MiddleName, CanAttend)

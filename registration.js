@@ -2,13 +2,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabaseUrl = "https://gfkqnumndbddqqwtkzrb.supabase.co";
   const supabaseKey = "sb_publishable_UxSj6m1Fs09le4GhMh7H3g_-nTfCsmi";
   const tableName = "attendees";
-
-  if (!window.supabase) {
-    console.error("Supabase SDK not loaded.");
-    return;
-  }
-
-  const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+  const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const supabaseClient = window.supabase
+    ? window.supabase.createClient(supabaseUrl, supabaseKey)
+    : null;
   const registerBtn = document.getElementById("btnhompage");
   const registerModal = document.getElementById("registerModal");
   const closeBtn = registerModal?.querySelector(".modal-close");
@@ -57,20 +54,77 @@ document.addEventListener("DOMContentLoaded", () => {
   registerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formData = new FormData(registerForm);
-    const payload = {
-      "FIRST_NAME": formData.get("firstName"),
-      "LAST_NAME": formData.get("lastName"),
-      "MIDDLE_NAME": formData.get("middleName"),
-      "CAN_ATTEND": formData.get("attendance") === "can-attend"
+    const normalizeName = (value) => (value || "")
+      .trim()
+      .replace(/\s+/g, " ");
+
+    const firstName = normalizeName(formData.get("firstName"));
+    const lastName = normalizeName(formData.get("lastName"));
+    const middleName = normalizeName(formData.get("middleName"));
+
+    const canAttend = formData.get("attendance") === "can-attend";
+    const supabasePayload = {
+      "FIRST_NAME": firstName,
+      "LAST_NAME": lastName,
+      "MIDDLE_NAME": middleName,
+      "CAN_ATTEND": canAttend
+    };
+    const localPayload = {
+      firstName,
+      lastName,
+      middleName,
+      canAttend
     };
 
     try {
-      const { error } = await supabaseClient
-        .from(tableName)
-        .insert(payload);
+      if (isLocalHost) {
+        const response = await fetch("/api/attendees", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(localPayload)
+        });
 
-      if (error) {
-        throw new Error(error.message);
+        const result = await response.json().catch(() => ({}));
+        if (response.status === 409) {
+          showToast("User already registered.");
+          return;
+        }
+        if (!response.ok) {
+          throw new Error(result.error || "Submit failed. Please try again.");
+        }
+      } else {
+        if (!supabaseClient) {
+          throw new Error("Supabase SDK not loaded.");
+        }
+
+        const { data: existingRows, count, error: existsError } = await supabaseClient
+          .from(tableName)
+          .select("PK_ATTENDEES", { count: "exact" })
+          .ilike("FIRST_NAME", firstName)
+          .ilike("LAST_NAME", lastName)
+          .limit(1);
+
+        if (existsError) {
+          console.warn("Duplicate check failed:", existsError);
+        } else {
+          const exists = (typeof count === "number" ? count : (existingRows?.length || 0)) > 0;
+          if (exists) {
+            showToast("User already registered.");
+            return;
+          }
+        }
+
+        const { error } = await supabaseClient
+          .from(tableName)
+          .insert(supabasePayload);
+
+        if (error) {
+          if (error.code === "23505") {
+            showToast("User already registered.");
+            return;
+          }
+          throw new Error(error.message);
+        }
       }
 
       closeModal();

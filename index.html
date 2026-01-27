@@ -1,40 +1,54 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boss Baby Sevi's Birthdays</title>
-    <style>
-
-        .birthday-gif {
-            width: 300px;  
-            height: auto;  
-        }
-
-        .about-image {
-            width: 200px; 
-            height: auto;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boss Baby Sevi's Birthdays</title>
+  <link rel="stylesheet" href="./style.css" />
+  <!-- Optional: clean, bold heading font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Boss Baby Sevi's Birthday!</h1>
+  <!-- Top actions -->
+  <nav class="top-actions">
+    <a class="pill-btn pill-blue" href="#venue">VENUE</a>
+    <a class="pill-btn pill-blue" href="#catering">CATERING SERVICES</a>
+  </nav>
 
-    <img class="birthday-gif" src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaTNwc2d2a2g4czkwMzFtdnAycTczaWpxdnM2ZWQ5eG1nYXJqZzkwZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NlGLQ1FU9mVDsMjeIU/giphy.gif" alt="Birthday GIF">
+  <!-- Hero Heading -->
+  <header class="hero">
+    <h1 id="BossBaby">WELCOME TO BOSS BABY SEVI'S BIRTHDAY</h1>
+  </header>
 
-    <h2>On The 1sst Birthday</h2>
+  <!-- Primary action -->
+  <div class="cta-row">
+    <a id="btnvenue" class="pill-btn pill-green" href="#register">REGISTER FOR ATTENDEES</a>
+  </div>
 
-    <a href="about.html">
-        <img class="about-image" src="../Snagit/SAD.jpg" alt="About Image">
-    </a>
+  <h2 class="section-title">On The 1st Birthday</h2>
 
-    <ul>
-        <li>Balloons (I love Balloons)</li>
-        <li>Cake (I'm Really Good at Eating)</li>
-        <li>An Appetite (There will be lots of Food)</li>
-    </ul>
+  <!-- Linked image (kept from your code) -->
+  <a class="about-link" href="./NinongandNinang/SeviNinongAndNinang.html">
+    <img class="about-image" src="./Snagit/seviphoto.jpg" alt="About Image" />
+  </a>
 
-    <a href="../birthdaySeviWebsites/NinongandNinang/SeviNinongAndNinang.html">List of Ninang and Ninong</a>
+  <!-- Rounded gray panel with pill items -->
+  <section class="chip-panel">
+    <span class="star" aria-hidden="true">⭐</span>
+    <div class="chips">
+      <span class="chip">Balloons (I love Balloons)</span>
+      <span class="chip">Cake (I'm Really Good at Eating)</span>
+      <span class="chip">An Appetite (There will be lots of Food)</span>
+      <a class="chip chip-link" href="./NinongandNinang/SeviNinongAndNinang.html">List of Ninang and Ninong</a>
+    </div>
+    <span class="star" aria-hidden="true">⭐</span>
+  </section>
+
+  <!-- Optional anchors -->
+  <div id="venue" style="height: 1px;"></div>
+  <div id="catering" style="height: 1px;"></div>
+  <div id="register" style="height: 1px;"></div>
 </body>
 </html>

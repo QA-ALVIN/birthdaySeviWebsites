@@ -1,0 +1,11 @@
+
+#BossBaby {
+  font-size: 60px;
+  text-align: center;
+  padding: 60px 16px;
+  color: green;
+  background-image: url("./Snagit/images.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}

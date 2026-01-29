@@ -28,7 +28,7 @@ body{
   background: radial-gradient(1200px 600px at 90% 110%, rgba(255,255,255,0.05), transparent 60%),
               linear-gradient(180deg, var(--bg2), var(--bg1));
   overflow-x: hidden;
-  padding: 24px 20px 60px;
+  padding: clamp(16px, 3vw, 24px) clamp(14px, 4vw, 20px) 60px;
 }
 
 /* ============ Top Actions ============ */
@@ -37,6 +37,7 @@ body{
   gap: 28px;
   justify-content: center;
   margin: 6px 0 26px;
+  flex-wrap: wrap;
 }
 .pill-btn{
   display: inline-flex;
@@ -88,7 +89,7 @@ body{
   font-weight: 800;
   letter-spacing: .06em;
   text-align: center;
-  padding: clamp(18px, 3vw, 30px) clamp(18px, 4vw, 42px);
+  padding: clamp(16px, 3.2vw, 30px) clamp(16px, 5vw, 42px);
   border-radius: 60px;
   box-shadow: var(--shadow-strong), var(--shadow-inset);
   text-shadow: 0 3px 10px rgba(0,0,0,.35);
@@ -129,7 +130,7 @@ body{
 }
 
 .about-image{
-  width: min(220px, 60vw);
+  width: min(220px, 80vw);
   height: auto;
   display: block;
   margin: 0 auto;
@@ -280,10 +281,33 @@ body{
 
 @media (max-width: 560px){
   .top-actions{
-    flex-wrap: wrap;
     gap: 12px;
+  }
+  .pill-btn{
+    width: 100%;
+    max-width: 340px;
+  }
+  #btnvenue,
+  #btnhompage{
+    width: 100%;
+    max-width: 340px;
+  }
+  .hero{
+    margin-bottom: 20px;
+  }
+  .cta-row{
+    margin: 14px 0 22px;
+  }
+  .section-title{
+    font-size: clamp(18px, 5vw, 24px);
   }
   .toggle-group{
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 360px){
+  #BossBaby{
+    letter-spacing: .03em;
   }
 }

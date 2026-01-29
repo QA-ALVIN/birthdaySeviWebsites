@@ -28,7 +28,7 @@ body{
   background: radial-gradient(1200px 600px at 90% 110%, rgba(255,255,255,0.05), transparent 60%),
               linear-gradient(180deg, var(--bg2), var(--bg1));
   overflow-x: hidden;
-  padding: 24px 20px 60px;
+  padding: clamp(16px, 3vw, 24px) clamp(14px, 4vw, 20px) 60px;
 }
 
 /* ============ Top Actions ============ */
@@ -37,6 +37,7 @@ body{
   gap: 28px;
   justify-content: center;
   margin: 6px 0 26px;
+  flex-wrap: wrap;
 }
 .pill-btn{
   display: inline-flex;
@@ -88,7 +89,7 @@ body{
   font-weight: 800;
   letter-spacing: .06em;
   text-align: center;
-  padding: clamp(18px, 3vw, 30px) clamp(18px, 4vw, 42px);
+  padding: clamp(16px, 3.2vw, 30px) clamp(16px, 5vw, 42px);
   border-radius: 60px;
   box-shadow: var(--shadow-strong), var(--shadow-inset);
   text-shadow: 0 3px 10px rgba(0,0,0,.35);
@@ -128,8 +129,9 @@ body{
   margin: 10px 0 18px;
 }
 .section-text{
-  text-align: left;
+  text-align: center;
   margin: 0 auto 10px;
+  width: fit-content;
   max-width: 520px;
   color: #eef5ff;
   line-height: 1.5;
@@ -172,6 +174,7 @@ body{
   justify-content: center;
   gap: 16px;
   margin: 10px 0 22px;
+  flex-wrap: wrap;
 }
 .tab-btn{
   border: none;
@@ -200,19 +203,27 @@ body{
   padding: 24px 20px;
   margin: 0 0 24px;
   box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+.name-columns{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: flex-start;
 }
 .name-list{
   list-style: decimal;
   margin: 0 auto 12px;
-  padding-left: 0;
-  list-style-position: inside;
+  padding-left: 1.6em;
+  list-style-position: outside;
   text-align: left;
-  display: grid;
-  gap: 12px;
-  max-width: 520px;
+  display: inline-block;
+  width: fit-content;
+  max-width: 420px;
 }
 .name-list li{
   display: list-item;
+  padding-bottom: 8px;
 }
 .name-btn{
   display: inline-flex;
@@ -256,7 +267,7 @@ body{
   max-height: 50vh;
 }
 .photo-modal-card img{
-  width: min(320px, 80vw);
+  width: min(320px, 88vw);
   height: auto;
   max-height: 70vh;
   object-fit: contain;
@@ -403,10 +414,46 @@ body{
 
 @media (max-width: 560px){
   .top-actions{
-    flex-wrap: wrap;
     gap: 12px;
+  }
+  .pill-btn{
+    width: 100%;
+    max-width: 340px;
+  }
+  .tab-btn{
+    width: 100%;
+    max-width: 260px;
+  }
+  .godparent-section{
+    padding: 20px 16px;
+  }
+  .section-text{
+    width: 100%;
+    max-width: 100%;
+  }
+  .name-list{
+    width: 100%;
+    max-width: 100%;
+    display: block;
+  }
+  .name-columns{
+    flex-direction: column;
+    gap: 12px;
+  }
+  .photo-modal-card{
+    max-width: 90vw;
   }
   .toggle-group{
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 360px){
+  #BossBaby{
+    letter-spacing: .03em;
+  }
+  .name-btn{
+    width: 100%;
+    text-align: center;
   }
 }

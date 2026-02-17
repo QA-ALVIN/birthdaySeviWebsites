@@ -74,14 +74,18 @@ body > :not(.balloon-background){
   position: absolute;
   top: calc(100% - 1px);
   left: 50%;
-  width: 0;
+  width: clamp(10px, 1.1vw, 14px);
   height: var(--thread);
-  border-left: 1px solid rgba(235,244,255,.72);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 200' preserveAspectRatio='none'%3E%3Cpath d='M7 0C3 14 11 28 7 42C3 56 11 70 7 84C3 98 11 112 7 126C3 140 11 154 7 168C4 178 10 189 7 200' fill='none' stroke='%23ebf4ff' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-position: center;
   transform: translateX(-50%) rotate(var(--thread-angle));
   transform-origin: top center;
-  opacity: .78;
-  animation: thread-sway 2.8s ease-in-out infinite;
+  opacity: .74;
+  animation: thread-sway 6.5s ease-in-out infinite;
   animation-delay: var(--delay);
+  will-change: transform;
 }
 .balloon-1{ --left: 4%; --size: clamp(54px, 5vw, 74px); --color: var(--balloon-1); --duration: 17s; --delay: -2s; --drift: 16px; --thread: clamp(72px, 11vh, 128px); --thread-angle: -6deg; }
 .balloon-2{ --left: 14%; --size: clamp(62px, 5.8vw, 82px); --color: var(--balloon-2); --duration: 19s; --delay: -9s; --drift: -22px; --thread: clamp(84px, 13vh, 144px); --thread-angle: 5deg; }
@@ -114,13 +118,19 @@ body > :not(.balloon-background){
 
 @keyframes thread-sway{
   0%{
-    transform: translateX(-50%) rotate(calc(var(--thread-angle) - 6deg));
+    transform: translateX(-50%) rotate(calc(var(--thread-angle) - 2deg)) skewX(0deg);
+  }
+  25%{
+    transform: translateX(-50%) rotate(calc(var(--thread-angle) + 1deg)) skewX(2.2deg);
   }
   50%{
-    transform: translateX(-50%) rotate(calc(var(--thread-angle) + 6deg));
+    transform: translateX(-50%) rotate(calc(var(--thread-angle) - 1deg)) skewX(-2.2deg);
+  }
+  75%{
+    transform: translateX(-50%) rotate(calc(var(--thread-angle) + 1.2deg)) skewX(1.8deg);
   }
   100%{
-    transform: translateX(-50%) rotate(calc(var(--thread-angle) - 5deg));
+    transform: translateX(-50%) rotate(calc(var(--thread-angle) - 2deg)) skewX(0deg);
   }
 }
 

@@ -7,7 +7,18 @@ dotenv.config();
 
 const app = express();
 const path = require("path");
-const port = process.env.PORT || 8080;
+const host = process.env.HOST || "127.0.0.1";
+
+const parsePort = (value) => {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
+    return null;
+  }
+  return parsed;
+};
+
+const configuredPort = parsePort(process.env.PORT) ?? 8080;
+const candidatePorts = [...new Set([configuredPort, 5050, 3000])];
 
 
 app.use(cors());
@@ -93,6 +104,27 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
-});
+const listenWithFallback = (index = 0) => {
+  const port = candidatePorts[index];
+
+  const server = app.listen(port, host, () => {
+    console.log(`API listening on http://${host}:${port}`);
+  });
+
+  server.on("error", (error) => {
+    const canRetry = (error?.code === "EACCES" || error?.code === "EADDRINUSE")
+      && index < candidatePorts.length - 1;
+
+    if (canRetry) {
+      const nextPort = candidatePorts[index + 1];
+      console.warn(`Port ${port} unavailable (${error.code}). Trying ${nextPort}...`);
+      listenWithFallback(index + 1);
+      return;
+    }
+
+    console.error(`Failed to start API on ${host}:${port}`, error);
+    process.exit(1);
+  });
+};
+
+listenWithFallback();

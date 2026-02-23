@@ -234,33 +234,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const run = async () => {
     statusMessage.textContent = "Loading dashboard...";
-    const loaders = isHostedSite
-      ? [
-        { label: "local API", fn: loadFromLocalApi },
-        { label: "Supabase", fn: loadFromSupabase }
-      ]
-      : [
-        { label: "local API", fn: loadFromLocalApi },
-        { label: "Supabase", fn: loadFromSupabase }
-      ];
-
-    let attendees = [];
-    let sourceLabel = "";
-    let lastError = null;
-
-    for (const loader of loaders) {
-      try {
-        attendees = await loader.fn();
-        sourceLabel = loader.label;
-        break;
-      } catch (error) {
-        lastError = error;
-      }
-    }
-
-    if (!sourceLabel) {
-      throw lastError || new Error("Failed to load dashboard.");
-    }
+    const sourceLabel = isHostedSite ? "Supabase" : "local API";
+    const attendees = isHostedSite
+      ? await loadFromSupabase()
+      : await loadFromLocalApi();
 
     const yesAttendees = attendees.filter((attendee) => attendee.canAttend);
     const noAttendees = attendees.filter((attendee) => !attendee.canAttend);
@@ -271,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderList(yesList, yesAttendees);
     renderList(noList, noAttendees);
     setupInteraction();
-    if (isHostedSite && sourceLabel === "Supabase" && attendees.length === 0) {
+    if (isHostedSite && attendees.length === 0) {
       statusMessage.textContent = "Loaded 0 response(s) from Supabase. If records exist, enable SELECT policy for attendees.";
       return;
     }

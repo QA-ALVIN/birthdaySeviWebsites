@@ -200,33 +200,10 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     try {
-      const submitters = isHostedSite
-        ? [
-          () => submitToLocalApi(localPayload),
-          () => submitToSupabase(supabasePayload, firstName, lastName)
-        ]
-        : [
-          () => submitToLocalApi(localPayload),
-          () => submitToSupabase(supabasePayload, firstName, lastName)
-        ];
-
-      let submitted = false;
-      let lastError = null;
-      for (const submit of submitters) {
-        try {
-          await submit();
-          submitted = true;
-          break;
-        } catch (sourceError) {
-          if (sourceError?.code === duplicateCode) {
-            throw sourceError;
-          }
-          lastError = sourceError;
-        }
-      }
-
-      if (!submitted) {
-        throw lastError || new Error("Submit failed. Please try again.");
+      if (isHostedSite) {
+        await submitToSupabase(supabasePayload, firstName, lastName);
+      } else {
+        await submitToLocalApi(localPayload);
       }
 
       closeModal();

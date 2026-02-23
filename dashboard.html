@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attendance Dashboard</title>
+  <link rel="stylesheet" href="./dashboard.css" />
+</head>
+<body>
+  <main class="dashboard">
+    <header class="dashboard-header">
+      <h1>Attendance Dashboard</h1>
+      <p class="subhead">Private URL: open directly in your browser.</p>
+    </header>
+
+    <section class="totals" aria-label="Attendance totals">
+      <article class="total-card">
+        <h2>Yes, I will be there to celebrate with you</h2>
+        <p id="yesTotal" class="total-value">0</p>
+      </article>
+      <article class="total-card">
+        <h2>Sorry, I am unable to attend</h2>
+        <p id="noTotal" class="total-value">0</p>
+      </article>
+    </section>
+
+    <section class="graph-section" aria-label="Dashboard graph">
+      <h2>Response Graph</h2>
+      <p id="graphHint" class="graph-hint">Click any bar to display respondent lists.</p>
+      <div id="graph" class="graph" role="group" aria-label="Attendance response graph">
+        <button type="button" class="bar-wrap" data-category="yes" aria-label="Yes responses">
+          <span id="yesBar" class="bar-fill"></span>
+          <span id="yesBarCount" class="bar-count">0</span>
+          <span class="bar-label">Yes</span>
+        </button>
+        <button type="button" class="bar-wrap" data-category="no" aria-label="Unable to attend responses">
+          <span id="noBar" class="bar-fill"></span>
+          <span id="noBarCount" class="bar-count">0</span>
+          <span class="bar-label">Sorry</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="respondentsSection" class="respondents" aria-label="Respondents" hidden>
+      <h2>Respondent Lists</h2>
+      <div class="respondent-grid">
+        <article class="respondent-card">
+          <h3>Sorry, I am unable to attend</h3>
+          <ul id="noList"></ul>
+        </article>
+        <article class="respondent-card">
+          <h3>Yes, I will be there to celebrate with you</h3>
+          <ul id="yesList"></ul>
+        </article>
+      </div>
+    </section>
+
+    <p id="statusMessage" class="status" role="status" aria-live="polite"></p>
+  </main>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="./dashboard.js" defer></script>
+</body>
+</html>

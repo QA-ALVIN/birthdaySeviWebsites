@@ -18,10 +18,14 @@ const parsePort = (value) => {
 };
 
 const configuredPort = parsePort(process.env.PORT) ?? 8080;
-const candidatePorts = [...new Set([configuredPort, 5050, 3000])];
+const candidatePorts = [...new Set([configuredPort, 5050, 5051, 3000, 4000])];
 
 
 app.use(cors());
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Private-Network", "true");
+  next();
+});
 app.use(express.json());
 app.use(express.static(__dirname));
 
@@ -52,6 +56,29 @@ const getPool = () => {
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+app.get("/api/attendees", async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request().query(`
+      SELECT FirstName, LastName, MiddleName, CanAttend
+      FROM dbo.Attendees
+      ORDER BY LastName, FirstName;
+    `);
+
+    const attendees = (result.recordset || []).map((row) => ({
+      firstName: (row.FirstName || "").trim(),
+      lastName: (row.LastName || "").trim(),
+      middleName: (row.MiddleName || "").trim(),
+      canAttend: Boolean(row.CanAttend)
+    }));
+
+    return res.json({ attendees });
+  } catch (error) {
+    console.error("Fetch attendees failed:", error);
+    return res.status(500).json({ error: error?.message || "Server error" });
+  }
 });
 
 app.post("/api/attendees", async (req, res) => {

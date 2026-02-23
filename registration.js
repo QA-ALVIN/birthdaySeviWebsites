@@ -2,7 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabaseUrl = "https://gfkqnumndbddqqwtkzrb.supabase.co";
   const supabaseKey = "sb_publishable_UxSj6m1Fs09le4GhMh7H3g_-nTfCsmi";
   const tableName = "attendees";
-  const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const localUnavailableCode = "LOCAL_API_UNAVAILABLE";
+  const duplicateCode = "DUPLICATE_ATTENDEE";
   const supabaseClient = window.supabase
     ? window.supabase.createClient(supabaseUrl, supabaseKey)
     : null;
@@ -51,6 +52,130 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  const isPrivateIpv4Host = (hostname) => /^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hostname);
+
+  const isLikelyLocalHost = (hostname) => {
+    if (!hostname) {
+      return false;
+    }
+    return hostname === "localhost"
+      || hostname === "127.0.0.1"
+      || hostname === "::1"
+      || hostname.endsWith(".local")
+      || isPrivateIpv4Host(hostname);
+  };
+
+  const getLocalApiEndpoints = () => {
+    const endpoints = new Set(["/api/attendees"]);
+    const hostname = window.location.hostname;
+    const hostCandidates = [
+      isLikelyLocalHost(hostname) ? hostname : null,
+      "127.0.0.1",
+      "localhost"
+    ].filter(Boolean);
+    const portCandidates = [window.location.port, "8080", "5050", "5051", "3000", "4000"].filter(Boolean);
+
+    hostCandidates.forEach((host) => {
+      portCandidates.forEach((port) => {
+        endpoints.add(`http://${host}:${port}/api/attendees`);
+      });
+    });
+
+    return Array.from(endpoints);
+  };
+
+  const submitToLocalApi = async (payload) => {
+    let lastUnavailableError = null;
+    const endpoints = getLocalApiEndpoints();
+
+    for (const endpoint of endpoints) {
+      let response;
+      try {
+        response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch (error) {
+        lastUnavailableError = error;
+        continue;
+      }
+
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 409) {
+        const error = new Error("already registered.");
+        error.code = duplicateCode;
+        throw error;
+      }
+
+      if (!response.ok) {
+        if (response.status === 404 || response.status === 405) {
+          lastUnavailableError = new Error("Local API route not found.");
+          continue;
+        }
+        throw new Error(result.error || "Submit failed. Please try again.");
+      }
+
+      return;
+    }
+
+    const unavailableError = lastUnavailableError || new Error("Local API unavailable.");
+    unavailableError.code = localUnavailableCode;
+    throw unavailableError;
+  };
+
+  const submitToSupabase = async (payload, firstName, lastName) => {
+    if (!supabaseClient) {
+      throw new Error("Supabase SDK not loaded.");
+    }
+
+    const { data: existingRows, count, error: existsError } = await supabaseClient
+      .from(tableName)
+      .select("PK_ATTENDEES", { count: "exact" })
+      .ilike("FIRST_NAME", firstName)
+      .ilike("LAST_NAME", lastName)
+      .limit(1);
+
+    if (existsError) {
+      console.warn("Duplicate check failed:", existsError);
+    } else {
+      const exists = (typeof count === "number" ? count : (existingRows?.length || 0)) > 0;
+      if (exists) {
+        const duplicateError = new Error("already registered.");
+        duplicateError.code = duplicateCode;
+        throw duplicateError;
+      }
+    }
+
+    const { error } = await supabaseClient
+      .from(tableName)
+      .insert(payload);
+
+    if (error) {
+      if (error.code === "23505") {
+        const duplicateError = new Error("already registered.");
+        duplicateError.code = duplicateCode;
+        throw duplicateError;
+      }
+      throw new Error(error.message);
+    }
+  };
+
+  const tryWrite = async (targetLabel, writeFn) => {
+    try {
+      await writeFn();
+      return { target: targetLabel, status: "created" };
+    } catch (error) {
+      if (error?.code === duplicateCode) {
+        return { target: targetLabel, status: "duplicate" };
+      }
+      if (error?.code === localUnavailableCode) {
+        return { target: targetLabel, status: "unavailable", error };
+      }
+      return { target: targetLabel, status: "failed", error };
+    }
+  };
+
   registerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formData = new FormData(registerForm);
@@ -77,59 +202,34 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     try {
-      if (isLocalHost) {
-        const response = await fetch("/api/attendees", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(localPayload)
-        });
+      const localResult = await tryWrite("Local SQL", () => submitToLocalApi(localPayload));
+      const supabaseResult = await tryWrite("Supabase", () => submitToSupabase(supabasePayload, firstName, lastName));
+      const results = [localResult, supabaseResult];
 
-        const result = await response.json().catch(() => ({}));
-        if (response.status === 409) {
-          showToast("already registered.");
-          return;
-        }
-        if (!response.ok) {
-          throw new Error(result.error || "Submit failed. Please try again.");
-        }
-      } else {
-        if (!supabaseClient) {
-          throw new Error("Supabase SDK not loaded.");
-        }
+      const createdCount = results.filter((result) => result.status === "created").length;
+      const duplicateCount = results.filter((result) => result.status === "duplicate").length;
+      const syncFailures = results.filter((result) => result.status === "unavailable" || result.status === "failed");
 
-        const { data: existingRows, count, error: existsError } = await supabaseClient
-          .from(tableName)
-          .select("PK_ATTENDEES", { count: "exact" })
-          .ilike("FIRST_NAME", firstName)
-          .ilike("LAST_NAME", lastName)
-          .limit(1);
+      if (createdCount === 0 && duplicateCount === results.length) {
+        showToast("already registered.");
+        return;
+      }
 
-        if (existsError) {
-          console.warn("Duplicate check failed:", existsError);
-        } else {
-          const exists = (typeof count === "number" ? count : (existingRows?.length || 0)) > 0;
-          if (exists) {
-            showToast("already registered.");
-            return;
-          }
-        }
-
-        const { error } = await supabaseClient
-          .from(tableName)
-          .insert(supabasePayload);
-
-        if (error) {
-          if (error.code === "23505") {
-            showToast("User already registered.");
-            return;
-          }
-          throw new Error(error.message);
-        }
+      if (createdCount === 0 && duplicateCount === 0) {
+        const firstError = syncFailures[0]?.error || new Error("Submit failed. Please try again.");
+        throw firstError;
       }
 
       closeModal();
-      showToast("Submitted successfully.");
       registerForm.reset();
+
+      if (!syncFailures.length) {
+        showToast("Submitted successfully.");
+        return;
+      }
+
+      const failedTargets = syncFailures.map((result) => result.target).join(" & ");
+      showToast(`Submitted. Sync failed: ${failedTargets}.`);
     } catch (error) {
       console.error(error);
       showToast(error.message || "Submit failed. Please try again.");

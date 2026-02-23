@@ -233,12 +233,12 @@ body > :not(.balloon-background){
 }
 
 .about-image{
-  width: min(220px, 80vw);
+  width: min(220px, 90vw);
   height: auto;
   display: block;
   margin: 0 auto;
   border-radius: 16px;
-  box-shadow: 0 10px 24px rgba(0,0,0,.3);
+
 }
 
 /* ============ Chip Panel (Gray rounded container) ============ */
@@ -328,7 +328,7 @@ body > :not(.balloon-background){
 .toggle-option{
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: last baseline;
   gap: 8px;
   padding: 10px 12px;
   border-radius: 999px;

@@ -162,6 +162,11 @@ document.addEventListener("DOMContentLoaded", () => {
       .insert(payload);
 
     if (error) {
+      if (error.code === "42501") {
+        const policyError = new Error("Supabase policy blocks registration. Enable INSERT policy for attendees.");
+        policyError.code = "SUPABASE_POLICY_BLOCKED";
+        throw policyError;
+      }
       if (error.code === "23505") {
         const duplicateError = new Error("already registered.");
         duplicateError.code = duplicateCode;

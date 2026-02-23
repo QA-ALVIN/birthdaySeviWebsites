@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabaseKey = "sb_publishable_UxSj6m1Fs09le4GhMh7H3g_-nTfCsmi";
   const tableName = "attendees";
   const localUnavailableCode = "LOCAL_API_UNAVAILABLE";
+  const hostedDashboardUrl = "https://qa-alvin.github.io/birthdaySeviWebsites/dashboard.html";
   const isHostedSite = /(^|\.)github\.io$/i.test(window.location.hostname)
     || /(^|\.)github\.com$/i.test(window.location.hostname);
 
@@ -249,10 +250,12 @@ document.addEventListener("DOMContentLoaded", () => {
     renderList(noList, noAttendees);
     setupInteraction();
     if (isHostedSite && attendees.length === 0) {
-      statusMessage.textContent = "Loaded 0 response(s) from Supabase. If records exist, enable SELECT policy for attendees.";
+      statusMessage.textContent = `Loaded 0 response(s) from ${hostedDashboardUrl}. If records exist, enable SELECT policy for attendees.`;
       return;
     }
-    statusMessage.textContent = `Loaded ${attendees.length} response(s) from ${sourceLabel}.`;
+    statusMessage.textContent = isHostedSite
+      ? `Loaded ${attendees.length} response(s) from ${hostedDashboardUrl}.`
+      : `Loaded ${attendees.length} response(s) from ${sourceLabel}.`;
   };
 
   run().catch((error) => {

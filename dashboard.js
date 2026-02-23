@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const supabaseUrl = "https://gfkqnumndbddqqwtkzrb.supabase.co";
-  const supabaseKey = "sb_publishable_UxSj6m1Fs09le4GhMh7H3g_-nTfCsmi";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdma3FudW1uZGJkZHFxd3RrenJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0ODcwNTMsImV4cCI6MjA4NTA2MzA1M30.OxJtvZKMTnLIqRrOcotWqPVDn32QpQ1DzQ_6-PtZ9OI";
   const tableName = "attendees";
   const localUnavailableCode = "LOCAL_API_UNAVAILABLE";
   const hostedDashboardUrl = "https://qa-alvin.github.io/birthdaySeviWebsites/dashboard.html";

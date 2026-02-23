@@ -34,17 +34,40 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  const normalizeAttendee = (item) => ({
-    firstName: (item?.firstName || item?.FIRST_NAME || "").trim(),
-    lastName: (item?.lastName || item?.LAST_NAME || "").trim(),
-    middleName: (item?.middleName || item?.MIDDLE_NAME || "").trim(),
-    canAttend:
-      typeof item?.canAttend === "boolean"
-        ? item.canAttend
-        : typeof item?.CAN_ATTEND === "boolean"
-          ? item.CAN_ATTEND
-          : Boolean(item?.canAttend ?? item?.CAN_ATTEND)
-  });
+  const readField = (item, candidates) => {
+    for (const key of candidates) {
+      if (Object.prototype.hasOwnProperty.call(item || {}, key)) {
+        return item[key];
+      }
+    }
+
+    const loweredEntries = Object.entries(item || {}).map(([key, value]) => [key.toLowerCase(), value]);
+    for (const key of candidates) {
+      const match = loweredEntries.find(([existingKey]) => existingKey === key.toLowerCase());
+      if (match) {
+        return match[1];
+      }
+    }
+
+    return undefined;
+  };
+
+  const normalizeAttendee = (item) => {
+    const firstName = String(readField(item, ["firstName", "FIRST_NAME", "first_name"]) || "").trim();
+    const lastName = String(readField(item, ["lastName", "LAST_NAME", "last_name"]) || "").trim();
+    const middleName = String(readField(item, ["middleName", "MIDDLE_NAME", "middle_name"]) || "").trim();
+    const rawCanAttend = readField(item, ["canAttend", "CAN_ATTEND", "can_attend"]);
+    const canAttend = typeof rawCanAttend === "boolean"
+      ? rawCanAttend
+      : String(rawCanAttend || "").toLowerCase() === "true" || String(rawCanAttend) === "1";
+
+    return {
+      firstName,
+      lastName,
+      middleName,
+      canAttend
+    };
+  };
 
   const toFullName = (attendee) => {
     return [attendee.firstName, attendee.middleName, attendee.lastName]
@@ -158,17 +181,39 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const client = window.supabase.createClient(supabaseUrl, supabaseKey);
-    const { data, error } = await client
-      .from(tableName)
-      .select("FIRST_NAME, LAST_NAME, MIDDLE_NAME, CAN_ATTEND")
-      .order("LAST_NAME", { ascending: true })
-      .order("FIRST_NAME", { ascending: true });
+    const queries = [
+      () => client.from(tableName).select("FIRST_NAME, LAST_NAME, MIDDLE_NAME, CAN_ATTEND"),
+      () => client.from(tableName).select("first_name, last_name, middle_name, can_attend"),
+      () => client.from(tableName).select("*")
+    ];
 
-    if (error) {
-      throw new Error(error.message);
+    let lastError = null;
+
+    for (const runQuery of queries) {
+      const { data, error } = await runQuery();
+      if (error) {
+        lastError = error;
+        continue;
+      }
+
+      const normalized = (data || []).map(normalizeAttendee);
+      return normalized.sort((a, b) => {
+        const byLast = a.lastName.localeCompare(b.lastName, undefined, { sensitivity: "base" });
+        if (byLast !== 0) {
+          return byLast;
+        }
+        return a.firstName.localeCompare(b.firstName, undefined, { sensitivity: "base" });
+      });
     }
 
-    return (data || []).map(normalizeAttendee);
+    if (lastError) {
+      if (lastError.code === "42501") {
+        throw new Error("Supabase read is blocked by policy. Enable SELECT for attendees.");
+      }
+      throw new Error(lastError.message || "Unable to read attendees from Supabase.");
+    }
+
+    return [];
   };
 
   const setActiveBar = (category) => {
@@ -196,14 +241,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ? await loadFromSupabase()
       : await loadFromLocalApi();
 
-    attendees.sort((a, b) => {
-      const byLast = a.lastName.localeCompare(b.lastName, undefined, { sensitivity: "base" });
-      if (byLast !== 0) {
-        return byLast;
-      }
-      return a.firstName.localeCompare(b.firstName, undefined, { sensitivity: "base" });
-    });
-
     const yesAttendees = attendees.filter((attendee) => attendee.canAttend);
     const noAttendees = attendees.filter((attendee) => !attendee.canAttend);
 
@@ -213,6 +250,10 @@ document.addEventListener("DOMContentLoaded", () => {
     renderList(yesList, yesAttendees);
     renderList(noList, noAttendees);
     setupInteraction();
+    if (isHostedSite && attendees.length === 0) {
+      statusMessage.textContent = "Loaded 0 response(s) from Supabase. If records exist, enable SELECT policy for attendees.";
+      return;
+    }
     statusMessage.textContent = `Loaded ${attendees.length} response(s) from ${sourceLabel}.`;
   };
 

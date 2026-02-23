@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabaseKey = "sb_publishable_UxSj6m1Fs09le4GhMh7H3g_-nTfCsmi";
   const tableName = "attendees";
   const localUnavailableCode = "LOCAL_API_UNAVAILABLE";
+  const isHostedSite = /(^|\.)github\.io$/i.test(window.location.hostname)
+    || /(^|\.)github\.com$/i.test(window.location.hostname);
 
   const yesTotal = document.getElementById("yesTotal");
   const noTotal = document.getElementById("noTotal");
@@ -127,13 +129,19 @@ document.addEventListener("DOMContentLoaded", () => {
         continue;
       }
 
-      const payload = await response.json().catch(() => ({}));
+      const contentType = (response.headers.get("content-type") || "").toLowerCase();
+      const payload = await response.json().catch(() => null);
       if (!response.ok) {
         if (response.status === 404 || response.status === 405) {
           lastUnavailableError = new Error("Local API route not found.");
           continue;
         }
-        throw new Error(payload.error || "Unable to load attendees.");
+        throw new Error(payload?.error || "Unable to load attendees.");
+      }
+
+      if (!contentType.includes("application/json") || !Array.isArray(payload?.attendees)) {
+        lastUnavailableError = new Error("Unexpected local API response format.");
+        continue;
       }
 
       return (payload.attendees || []).map(normalizeAttendee);
@@ -183,18 +191,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const run = async () => {
     statusMessage.textContent = "Loading dashboard...";
-    let attendees = [];
-    let sourceLabel = "local API";
-
-    try {
-      attendees = await loadFromLocalApi();
-    } catch (localError) {
-      if (localError?.code !== localUnavailableCode) {
-        throw localError;
-      }
-      attendees = await loadFromSupabase();
-      sourceLabel = "Supabase";
-    }
+    const sourceLabel = isHostedSite ? "Supabase" : "local API";
+    const attendees = isHostedSite
+      ? await loadFromSupabase()
+      : await loadFromLocalApi();
 
     attendees.sort((a, b) => {
       const byLast = a.lastName.localeCompare(b.lastName, undefined, { sensitivity: "base" });

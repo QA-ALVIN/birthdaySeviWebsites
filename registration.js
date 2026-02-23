@@ -2,8 +2,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabaseUrl = "https://gfkqnumndbddqqwtkzrb.supabase.co";
   const supabaseKey = "sb_publishable_UxSj6m1Fs09le4GhMh7H3g_-nTfCsmi";
   const tableName = "attendees";
-  const localUnavailableCode = "LOCAL_API_UNAVAILABLE";
   const duplicateCode = "DUPLICATE_ATTENDEE";
+  const localUnavailableCode = "LOCAL_API_UNAVAILABLE";
+  const isHostedSite = /(^|\.)github\.io$/i.test(window.location.hostname)
+    || /(^|\.)github\.com$/i.test(window.location.hostname);
   const supabaseClient = window.supabase
     ? window.supabase.createClient(supabaseUrl, supabaseKey)
     : null;
@@ -103,7 +105,8 @@ document.addEventListener("DOMContentLoaded", () => {
         continue;
       }
 
-      const result = await response.json().catch(() => ({}));
+      const contentType = (response.headers.get("content-type") || "").toLowerCase();
+      const result = await response.json().catch(() => null);
       if (response.status === 409) {
         const error = new Error("already registered.");
         error.code = duplicateCode;
@@ -115,7 +118,12 @@ document.addEventListener("DOMContentLoaded", () => {
           lastUnavailableError = new Error("Local API route not found.");
           continue;
         }
-        throw new Error(result.error || "Submit failed. Please try again.");
+        throw new Error(result?.error || "Submit failed. Please try again.");
+      }
+
+      if (!contentType.includes("application/json")) {
+        lastUnavailableError = new Error("Unexpected local API response format.");
+        continue;
       }
 
       return;
@@ -189,31 +197,20 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     try {
-      try {
+      if (isHostedSite) {
+        await submitToSupabase(supabasePayload, firstName, lastName);
+      } else {
         await submitToLocalApi(localPayload);
-      } catch (localError) {
-        if (localError?.code === duplicateCode) {
-          showToast("already registered.");
-          return;
-        }
-        if (localError?.code !== localUnavailableCode) {
-          throw localError;
-        }
-        try {
-          await submitToSupabase(supabasePayload, firstName, lastName);
-        } catch (supabaseError) {
-          if (supabaseError?.code === duplicateCode) {
-            showToast("already registered.");
-            return;
-          }
-          throw supabaseError;
-        }
       }
 
       closeModal();
       showToast("Submitted successfully.");
       registerForm.reset();
     } catch (error) {
+      if (error?.code === duplicateCode) {
+        showToast("already registered.");
+        return;
+      }
       console.error(error);
       showToast(error.message || "Submit failed. Please try again.");
     }

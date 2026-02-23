@@ -68,11 +68,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const getLocalApiEndpoints = () => {
     const endpoints = new Set(["/api/attendees"]);
     const hostname = window.location.hostname;
-    const hostCandidates = [
-      isLikelyLocalHost(hostname) ? hostname : null,
-      "127.0.0.1",
-      "localhost"
-    ].filter(Boolean);
+    const shouldTryDirectHosts = window.location.protocol === "file:" || isLikelyLocalHost(hostname);
+
+    if (!shouldTryDirectHosts) {
+      return Array.from(endpoints);
+    }
+
+    const hostCandidates = [hostname, "127.0.0.1", "localhost"].filter(Boolean);
     const portCandidates = [window.location.port, "8080", "5050", "5051", "3000", "4000"].filter(Boolean);
 
     hostCandidates.forEach((host) => {
@@ -161,21 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  const tryWrite = async (targetLabel, writeFn) => {
-    try {
-      await writeFn();
-      return { target: targetLabel, status: "created" };
-    } catch (error) {
-      if (error?.code === duplicateCode) {
-        return { target: targetLabel, status: "duplicate" };
-      }
-      if (error?.code === localUnavailableCode) {
-        return { target: targetLabel, status: "unavailable", error };
-      }
-      return { target: targetLabel, status: "failed", error };
-    }
-  };
-
   registerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formData = new FormData(registerForm);
@@ -202,34 +189,30 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     try {
-      const localResult = await tryWrite("Local SQL", () => submitToLocalApi(localPayload));
-      const supabaseResult = await tryWrite("Supabase", () => submitToSupabase(supabasePayload, firstName, lastName));
-      const results = [localResult, supabaseResult];
-
-      const createdCount = results.filter((result) => result.status === "created").length;
-      const duplicateCount = results.filter((result) => result.status === "duplicate").length;
-      const syncFailures = results.filter((result) => result.status === "unavailable" || result.status === "failed");
-
-      if (createdCount === 0 && duplicateCount === results.length) {
-        showToast("already registered.");
-        return;
-      }
-
-      if (createdCount === 0 && duplicateCount === 0) {
-        const firstError = syncFailures[0]?.error || new Error("Submit failed. Please try again.");
-        throw firstError;
+      try {
+        await submitToLocalApi(localPayload);
+      } catch (localError) {
+        if (localError?.code === duplicateCode) {
+          showToast("already registered.");
+          return;
+        }
+        if (localError?.code !== localUnavailableCode) {
+          throw localError;
+        }
+        try {
+          await submitToSupabase(supabasePayload, firstName, lastName);
+        } catch (supabaseError) {
+          if (supabaseError?.code === duplicateCode) {
+            showToast("already registered.");
+            return;
+          }
+          throw supabaseError;
+        }
       }
 
       closeModal();
+      showToast("Submitted successfully.");
       registerForm.reset();
-
-      if (!syncFailures.length) {
-        showToast("Submitted successfully.");
-        return;
-      }
-
-      const failedTargets = syncFailures.map((result) => result.target).join(" & ");
-      showToast(`Submitted. Sync failed: ${failedTargets}.`);
     } catch (error) {
       console.error(error);
       showToast(error.message || "Submit failed. Please try again.");

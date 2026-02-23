@@ -121,13 +121,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const getLocalApiEndpoints = () => {
     const endpoints = new Set(["/api/attendees"]);
     const hostname = window.location.hostname;
-    const shouldTryDirectHosts = window.location.protocol === "file:" || isLikelyLocalHost(hostname);
-
-    if (!shouldTryDirectHosts) {
-      return Array.from(endpoints);
-    }
-
-    const hostCandidates = [hostname, "127.0.0.1", "localhost"].filter(Boolean);
+    const hostCandidates = [
+      isLikelyLocalHost(hostname) ? hostname : null,
+      "127.0.0.1",
+      "localhost"
+    ].filter(Boolean);
     const portCandidates = [window.location.port, "8080", "5050", "5051", "3000", "4000"].filter(Boolean);
 
     hostCandidates.forEach((host) => {
@@ -236,10 +234,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const run = async () => {
     statusMessage.textContent = "Loading dashboard...";
-    const sourceLabel = isHostedSite ? "Supabase" : "local API";
-    const attendees = isHostedSite
-      ? await loadFromSupabase()
-      : await loadFromLocalApi();
+    const loaders = isHostedSite
+      ? [
+        { label: "local API", fn: loadFromLocalApi },
+        { label: "Supabase", fn: loadFromSupabase }
+      ]
+      : [
+        { label: "local API", fn: loadFromLocalApi },
+        { label: "Supabase", fn: loadFromSupabase }
+      ];
+
+    let attendees = [];
+    let sourceLabel = "";
+    let lastError = null;
+
+    for (const loader of loaders) {
+      try {
+        attendees = await loader.fn();
+        sourceLabel = loader.label;
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (!sourceLabel) {
+      throw lastError || new Error("Failed to load dashboard.");
+    }
 
     const yesAttendees = attendees.filter((attendee) => attendee.canAttend);
     const noAttendees = attendees.filter((attendee) => !attendee.canAttend);
@@ -250,7 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderList(yesList, yesAttendees);
     renderList(noList, noAttendees);
     setupInteraction();
-    if (isHostedSite && attendees.length === 0) {
+    if (isHostedSite && sourceLabel === "Supabase" && attendees.length === 0) {
       statusMessage.textContent = "Loaded 0 response(s) from Supabase. If records exist, enable SELECT policy for attendees.";
       return;
     }

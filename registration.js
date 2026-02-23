@@ -70,13 +70,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const getLocalApiEndpoints = () => {
     const endpoints = new Set(["/api/attendees"]);
     const hostname = window.location.hostname;
-    const shouldTryDirectHosts = window.location.protocol === "file:" || isLikelyLocalHost(hostname);
-
-    if (!shouldTryDirectHosts) {
-      return Array.from(endpoints);
-    }
-
-    const hostCandidates = [hostname, "127.0.0.1", "localhost"].filter(Boolean);
+    const hostCandidates = [
+      isLikelyLocalHost(hostname) ? hostname : null,
+      "127.0.0.1",
+      "localhost"
+    ].filter(Boolean);
     const portCandidates = [window.location.port, "8080", "5050", "5051", "3000", "4000"].filter(Boolean);
 
     hostCandidates.forEach((host) => {
@@ -202,10 +200,33 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     try {
-      if (isHostedSite) {
-        await submitToSupabase(supabasePayload, firstName, lastName);
-      } else {
-        await submitToLocalApi(localPayload);
+      const submitters = isHostedSite
+        ? [
+          () => submitToLocalApi(localPayload),
+          () => submitToSupabase(supabasePayload, firstName, lastName)
+        ]
+        : [
+          () => submitToLocalApi(localPayload),
+          () => submitToSupabase(supabasePayload, firstName, lastName)
+        ];
+
+      let submitted = false;
+      let lastError = null;
+      for (const submit of submitters) {
+        try {
+          await submit();
+          submitted = true;
+          break;
+        } catch (sourceError) {
+          if (sourceError?.code === duplicateCode) {
+            throw sourceError;
+          }
+          lastError = sourceError;
+        }
+      }
+
+      if (!submitted) {
+        throw lastError || new Error("Submit failed. Please try again.");
       }
 
       closeModal();
